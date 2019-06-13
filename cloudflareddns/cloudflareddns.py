@@ -31,13 +31,13 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
         params = {'name': zone_domain}
         zones = cf.zones.get(params=params)
     except CloudFlare.exceptions.CloudFlareAPIError as e:
-        print('badauth')
+        log.error('badauth')
         exit()
     except Exception as e:
         exit('/zones.get - %s - api call failed' % (e))
 
     if len(zones) == 0:
-        print('nohost')
+        log.error('nohost')
         exit()
 
     if len(zones) != 1:
@@ -66,11 +66,11 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
         if ip_address_type != old_ip_type:
             # only update the correct address type (A or AAAA)
             # we don't see this becuase of the search params above
-            print('IGNORED: %s %s ; wrong address family' % (hostname, old_ip))
+            log.info('IGNORED: %s %s ; wrong address family' % (hostname, old_ip))
             continue
 
         if ip == old_ip:
-            print('UNCHANGED: %s %s' % (hostname, ip))
+            log.info('UNCHANGED: %s %s' % (hostname, ip))
             updated = True
             continue
 
@@ -88,24 +88,25 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
             dns_record = cf.zones.dns_records.put(zone_id, dns_record_id, data=dns_record)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             exit('/zones.dns_records.put %s - %d %s - api call failed' % (hostname, e, e))
-        print('UPDATED: %s %s -> %s' % (hostname, old_ip, ip))
+        log.info('UPDATED: %s %s -> %s' % (hostname, old_ip, ip))
         updated = True
 
-    if updated:
-        return
+    if not updated:
+        # no exsiting dns record to update - so create dns record
+        dns_record = {
+            'name':hostname,
+            'type':ip_address_type,
+            'content':ip,
+            'ttl':ttl
+        }
+        try:
+            dns_record = cf.zones.dns_records.post(zone_id, data=dns_record)
+        except CloudFlare.exceptions.CloudFlareAPIError as e:
+            exit('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
+        log.info('CREATED: %s %s' % (hostname, ip))
 
-    # no exsiting dns record to update - so create dns record
-    dns_record = {
-        'name':hostname,
-        'type':ip_address_type,
-        'content':ip,
-        'ttl':ttl
-    }
-    try:
-        dns_record = cf.zones.dns_records.post(zone_id, data=dns_record)
-    except CloudFlare.exceptions.CloudFlareAPIError as e:
-        exit('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
-    print('CREATED: %s %s' % (hostname, ip))
+    # reached far enough, all good then (the text is required by Synology)
+    print('good')
 
 
 def main():

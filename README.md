@@ -45,12 +45,14 @@ You can configure a Synology DiskStation with CloudFlare DDNS.
 ```
 cat >> /etc/ddns_provider.conf << 'EOF'
 [USER_Cloudflare]
-        modulepath=/usr/local/sbin/cloudflareddns.sh
+        modulepath=/usr/local/CloudflareDDNS/bin/cloudflareddns-syno
         queryurl=https://www.cloudflare.com/
-E*.
+EOF
 ```
 
 #### Step 2. Install `cloudflareddns`
+
+Sure enough you can just `pip install cloudflareddns`. But the safest approach to your system is using `virtualenv` :)
 
 ```
 curl https://bootstrap.pypa.io/get-pip.py | python
