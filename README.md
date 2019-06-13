@@ -1,6 +1,6 @@
 # lastversion 
 
-[![Build Status](https://travis-ci.org/cloudflareddns/lastversion.svg?branch=master)](https://travis-ci.org/dvershinin/lastversion)
+[![Build Status](https://travis-ci.org/dvershinin/cloudflareddns.svg?branch=master)](https://travis-ci.org/dvershinin/cloudflareddns)
 [![PyPI version](https://badge.fury.io/py/cloudflareddns.svg)](https://badge.fury.io/py/cloudflareddns)
 
 A tiny command line utility for implementing DDNS with Cloudflare.
