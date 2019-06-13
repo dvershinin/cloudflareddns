@@ -11,9 +11,6 @@ A tiny command line utility for implementing DDNS with Cloudflare.
 
 ## Synopsys
 
-
-### Linux servers
-
 ```
 usage: cloudflareddns [-h] [--email EMAIL] [--key KEY] [--hostname HOSTNAME]
                       [--ip IP] [--verbose] [--version]
@@ -30,40 +27,34 @@ optional arguments:
   --version            show program's version number and exit
 ```
 
-### Synology DiskStations
+### Install and use with Synology DiskStations
 
 You can configure a Synology DiskStation with CloudFlare DDNS.
+The `cloudflaredns` ships with the necessary CLI interface for Synology compatibility: `cloudflareddns-syno`.
     
 #### Step 1. Access Synology via SSH
 
 * Login to your DSM
 * Go to Control Panel > Terminal & SNMP > Enable SSH service
-* Use your client or commandline to access Synology. If you don't have any, I recommand you can try out MobaXterm for Windows.
+* Use your client or commandline to access Synology. If you don't have any, I recommend you try out Putty for Windows.
 * Use your Synology admin account to connect.
-* Run the following command to add new DDNS provider:
+
+#### Step 2. Install `cloudflareddns`
+
+If you're not a lazy man, checkout [instructions on installing using virtualenv](SAFE-INSTALL.md) for this step.
+For quick setup instead:
+
+    curl https://bootstrap.pypa.io/get-pip.py | python
+    pip install cloudflareddns
+
+Run the following command to add new DDNS provider:
 
 ```
 cat >> /etc/ddns_provider.conf << 'EOF'
 [USER_Cloudflare]
-        modulepath=/usr/local/CloudflareDDNS/bin/cloudflareddns-syno
+        modulepath=/bin/cloudflareddns-syno
         queryurl=https://www.cloudflare.com/
 EOF
-```
-
-#### Step 2. Install `cloudflareddns`
-
-Sure enough you can just `pip install cloudflareddns`. But the safest approach to your system is using `virtualenv` :)
-
-```
-curl https://bootstrap.pypa.io/get-pip.py | python
-pip install virtualenv
-# create virtualenv twice to ensure creation of "activate" script
-virtualenv /usr/local/CloudflareDDNS
-virtualenv /usr/local/CloudflareDDNS
-# go inside our virtualenv
-. /usr/local/CloudflareDDNS/bin/activate
-# install the packages we need there (cloudflare will be used in the future):
-pip install cloudflareddns
 ```
 
 #### Step 3. Get Cloudflare parameters
@@ -82,7 +73,7 @@ Go to your account setting page and get API Key.
     yum install https://extras.getpagespeed.com/release-el7-latest.rpm
     yum install python2-cloudflareddns
     
-## Installation for other systems
+### Installation for other systems
 
 Installing with `pip` is easiest:
 
