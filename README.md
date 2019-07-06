@@ -30,7 +30,10 @@ optional arguments:
 ### Install and use with Synology DiskStations
 
 You can configure a Synology DiskStation with CloudFlare DDNS.
-The `cloudflaredns` ships with the necessary CLI interface for Synology compatibility: `cloudflareddns-syno`.
+
+**It's worth noting that if your Synology DSM is recent enough, you can simply use Synology's own DDNS service, then create a `CNAME` record at your domain that points to it. The downside to this solution, however, is extra DNS lookup required to resolve domain to IP.**
+
+Alternative solution is to use `cloudflaredns` which ships with the necessary CLI interface for Synology compatibility: `cloudflareddns-syno`.
     
 #### Step 1. Access Synology via SSH
 
