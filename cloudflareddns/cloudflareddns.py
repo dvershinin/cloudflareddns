@@ -9,10 +9,11 @@ import argparse
 import tldextract
 import CloudFlare
 import logging as log  # for verbose output
-import socket # to get default hostname
+import socket  # to get default hostname
 from .__about__ import __version__
 
-def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
+
+def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
 
     log.info("Updating {} to {}".format(hostname, ip))
 
@@ -31,7 +32,7 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
         params = {'name': zone_domain}
         zones = cf.zones.get(params=params)
     except CloudFlare.exceptions.CloudFlareAPIError as e:
-        log.error('badauth')
+        log.error('badauth - %s' % (e))
         exit()
     except Exception as e:
         exit('/zones.get - %s - api call failed' % (e))
@@ -41,13 +42,13 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
         exit()
 
     if len(zones) != 1:
-        exit('/zones.get - %s - api call returned %d items' % (zone_name, len(zones)))
+        exit('/zones.get - %s - api call returned %d items' % (zone_domain, len(zones)))
 
     zone_id = zones[0]['id']
     log.info("Zone ID is {}".format(zone_id))
 
     try:
-        params = {'name':hostname, 'match':'all', 'type':ip_address_type}
+        params = {'name': hostname, 'match': 'all', 'type': ip_address_type}
         dns_records = cf.zones.dns_records.get(zone_id, params=params)
     except CloudFlare.exceptions.CloudFlareAPIError as e:
         exit('/zones/dns_records %s - %d %s - api call failed' % (hostname, e, e))
@@ -78,11 +79,11 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
 
         dns_record_id = dns_record['id']
         dns_record = {
-            'name':hostname,
-            'type':ip_address_type,
-            'content':ip,
-            'proxied':proxied,
-            'ttl':ttl
+            'name': hostname,
+            'type': ip_address_type,
+            'content': ip,
+            'proxied': proxied,
+            'ttl': ttl
         }
         try:
             dns_record = cf.zones.dns_records.put(zone_id, dns_record_id, data=dns_record)
@@ -94,10 +95,10 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=1):
     if not updated:
         # no exsiting dns record to update - so create dns record
         dns_record = {
-            'name':hostname,
-            'type':ip_address_type,
-            'content':ip,
-            'ttl':ttl
+            'name': hostname,
+            'type': ip_address_type,
+            'content': ip,
+            'ttl': ttl
         }
         try:
             dns_record = cf.zones.dns_records.post(zone_id, data=dns_record)
@@ -142,6 +143,7 @@ def main():
 
 def syno():
     update(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+
 
 if __name__ == '__main__':
     main()

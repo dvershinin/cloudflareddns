@@ -29,5 +29,3 @@ def test_update():
     print("Resolved IP after update is: {}".format(new_ip))
 
     assert new_ip == ip
-
-
