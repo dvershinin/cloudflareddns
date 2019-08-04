@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import re
-import json
-import requests
 import argparse
-import tldextract
-import CloudFlare
 import logging as log  # for verbose output
 import socket  # to get default hostname
+import sys
+
+import CloudFlare
+import tldextract
+
 from .__about__ import __version__
 
 
@@ -28,18 +26,19 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
 
     cf = CloudFlare.CloudFlare(email=cf_username, token=cf_key)
     # now get the zone id
+    zones = []
     try:
         params = {'name': zone_domain}
         zones = cf.zones.get(params=params)
     except CloudFlare.exceptions.CloudFlareAPIError as e:
-        log.error('badauth - %s' % (e))
-        exit()
+        log.error('bad auth - %s' % e)
+        exit(1)
     except Exception as e:
-        exit('/zones.get - %s - api call failed' % (e))
+        exit('/zones.get - %s - api call failed' % e)
 
     if len(zones) == 0:
-        log.error('nohost')
-        exit()
+        log.error('no host')
+        exit(1)
 
     if len(zones) != 1:
         exit('/zones.get - %s - api call returned %d items' % (zone_domain, len(zones)))
@@ -47,6 +46,7 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
     zone_id = zones[0]['id']
     log.info("Zone ID is {}".format(zone_id))
 
+    dns_records = []
     try:
         params = {'name': hostname, 'match': 'all', 'type': ip_address_type}
         dns_records = cf.zones.dns_records.get(zone_id, params=params)
@@ -86,7 +86,7 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
             'ttl': ttl
         }
         try:
-            dns_record = cf.zones.dns_records.put(zone_id, dns_record_id, data=dns_record)
+            cf.zones.dns_records.put(zone_id, dns_record_id, data=dns_record)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             exit('/zones.dns_records.put %s - %d %s - api call failed' % (hostname, e, e))
         log.info('UPDATED: %s %s -> %s' % (hostname, old_ip, ip))
@@ -101,7 +101,7 @@ def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
             'ttl': ttl
         }
         try:
-            dns_record = cf.zones.dns_records.post(zone_id, data=dns_record)
+            cf.zones.dns_records.post(zone_id, data=dns_record)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             exit('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
         log.info('CREATED: %s %s' % (hostname, ip))
