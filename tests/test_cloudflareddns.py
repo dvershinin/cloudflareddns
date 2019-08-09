@@ -22,7 +22,7 @@ def test_update():
     # cf_username, cf_key, hostname, ip, proxied=False
     cloudflareddns.update(cf_username, cf_key, hostname, ip, False)
 
-    time.sleep(180)
+    time.sleep(600)
 
     # fetch record
     new_ip = socket.gethostbyname(hostname)
