@@ -2,113 +2,121 @@
 
 import argparse
 import logging as log  # for verbose output
+import os
 import socket  # to get default hostname
 import sys
 
 import CloudFlare
 import tldextract
+from CloudFlare.exceptions import CloudFlareAPIError
 
 from .__about__ import __version__
 
 
-def update(cf_username, cf_key, hostname, ip, proxied=True, ttl=120):
-
-    log.info("Updating {} to {}".format(hostname, ip))
+def update(cfUsername, cfKey, hostname, ip, ttl=None):
+    """
+    Create or update desired DNS record.
+    Returns Synology-friendly status strings:
+    https://community.synology.com/enu/forum/17/post/57640?reply=213305
+    """
+    log.debug("Updating {} to {}".format(hostname, ip))
 
     # get zone name correctly (from hostname)
-    zone_domain = tldextract.extract(hostname).registered_domain
-    log.info("Zone domain of hostname is {}".format(zone_domain))
+    zoneDomain = tldextract.extract(hostname).registered_domain
+    log.debug("Zone domain of hostname is {}".format(zoneDomain))
 
     if ':' in ip:
-        ip_address_type = 'AAAA'
+        ipAddressType = 'AAAA'
     else:
-        ip_address_type = 'A'
+        ipAddressType = 'A'
 
-    cf = CloudFlare.CloudFlare(email=cf_username, token=cf_key)
+    cf = CloudFlare.CloudFlare(email=cfUsername, token=cfKey)
     # now get the zone id
-    zones = []
     try:
-        params = {'name': zone_domain}
+        params = {'name': zoneDomain}
         zones = cf.zones.get(params=params)
-    except CloudFlare.exceptions.CloudFlareAPIError as e:
-        log.error('bad auth - %s' % e)
-        exit(1)
+    except CloudFlareAPIError as e:
+        log.error('Bad auth - %s' % e)
+        return 'badauth'
     except Exception as e:
-        exit('/zones.get - %s - api call failed' % e)
+        log.error('/zones.get - %s - api call failed' % e)
+        return '911'
 
     if len(zones) == 0:
-        log.error('no host')
-        exit(1)
+        log.error('No host')
+        return 'nohost'
 
     if len(zones) != 1:
-        exit('/zones.get - %s - api call returned %d items' % (zone_domain, len(zones)))
+        log.error('/zones.get - %s - api call returned %d items' % (zoneDomain, len(zones)))
+        return 'notfqdn'
 
     zone_id = zones[0]['id']
-    log.info("Zone ID is {}".format(zone_id))
+    log.debug("Zone ID is {}".format(zone_id))
 
-    dns_records = []
     try:
-        params = {'name': hostname, 'match': 'all', 'type': ip_address_type}
+        params = {'name': hostname, 'match': 'all', 'type': ipAddressType}
         dns_records = cf.zones.dns_records.get(zone_id, params=params)
-    except CloudFlare.exceptions.CloudFlareAPIError as e:
-        exit('/zones/dns_records %s - %d %s - api call failed' % (hostname, e, e))
+    except CloudFlareAPIError as e:
+        log.error('/zones/dns_records %s - %d %s - api call failed' % (hostname, e, e))
+        return '911'
 
-    updated = False
+    desiredRecordData = {
+        'name': hostname,
+        'type': ipAddressType,
+        'content': ip
+    }
+    if ttl:
+        desiredRecordData['ttl'] = ttl
 
     # update the record - unless it's already correct
-    for dns_record in dns_records:
-        old_ip = dns_record['content']
-        old_ip_type = dns_record['type']
+    for dnsRecord in dns_records:
+        oldIp = dnsRecord['content']
+        oldIpType = dnsRecord['type']
 
-        if ip_address_type not in ['A', 'AAAA']:
+        if ipAddressType not in ['A', 'AAAA']:
             # we only deal with A / AAAA records
             continue
 
-        if ip_address_type != old_ip_type:
+        if ipAddressType != oldIpType:
             # only update the correct address type (A or AAAA)
             # we don't see this becuase of the search params above
-            log.info('IGNORED: %s %s ; wrong address family' % (hostname, old_ip))
+            log.debug('IGNORED: %s %s ; wrong address family' % (hostname, oldIp))
             continue
 
-        if ip == old_ip:
-            log.info('UNCHANGED: %s %s' % (hostname, ip))
-            updated = True
-            continue
+        if ip == oldIp:
+            log.info('UNCHANGED: %s == %s' % (hostname, ip))
+            # nothing to do, record already matches to desired IP
+            return 'nochg'
 
         # Yes, we need to update this record - we know it's the same address type
+        dnsRecordId = dnsRecord['id']
 
-        dns_record_id = dns_record['id']
-        dns_record = {
-            'name': hostname,
-            'type': ip_address_type,
-            'content': ip,
-            'proxied': proxied,
-            'ttl': ttl
-        }
         try:
-            cf.zones.dns_records.put(zone_id, dns_record_id, data=dns_record)
+            cf.zones.dns_records.put(zone_id, dnsRecordId, data=desiredRecordData)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
-            exit('/zones.dns_records.put %s - %d %s - api call failed' % (hostname, e, e))
-        log.info('UPDATED: %s %s -> %s' % (hostname, old_ip, ip))
-        updated = True
+            log.error('/zones.dns_records.put %s - %d %s - api call failed' % (hostname, e, e))
+            return '911'
+        log.info('UPDATED: %s %s -> %s' % (hostname, oldIp, ip))
+        return 'good'
 
-    if not updated:
-        # no exsiting dns record to update - so create dns record
-        dns_record = {
-            'name': hostname,
-            'type': ip_address_type,
-            'content': ip,
-            'ttl': ttl
-        }
-        try:
-            cf.zones.dns_records.post(zone_id, data=dns_record)
-        except CloudFlare.exceptions.CloudFlareAPIError as e:
-            exit('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
+    # no exsiting dns record to update - so create dns record
+    try:
+        cf.zones.dns_records.post(zone_id, data=desiredRecordData)
         log.info('CREATED: %s %s' % (hostname, ip))
+        return 'good'
+    except CloudFlare.exceptions.CloudFlareAPIError as e:
+        log.error('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
+        return '911'
 
-    # reached far enough, all good then (the text is required by Synology)
-    print('good')
 
+
+    # reached far enough without genuine return/exception catching, must be an error
+    # using 'badagent' just because it is unique to other statuses used above
+    return 'badagent'
+
+def updateRecord(hostname, ip, ttl=None):
+    res = update(os.environ['CF_EMAIL'], os.environ['CF_KEY'], hostname, ip, ttl)
+    return res in ['good', 'nochg']
 
 def main():
     parser = argparse.ArgumentParser(description='Update DDNS in Cloudflare.')
@@ -118,31 +126,31 @@ def main():
                         help='Hostname to set IP for')
     parser.add_argument('--ip', dest='ip',
                         help='The IP address')
+    parser.add_argument('--ttl', type=int, help='TTL in seconds')
     parser.add_argument('--verbose', dest='verbose', action='store_true')
 
     parser.add_argument('--version', action='version',
                         version='%(prog)s {version}'.format(version=__version__))
 
-    parser.set_defaults(hostname=socket.getfqdn())
+    parser.set_defaults(hostname=socket.getfqdn(), ttl=None, email=os.environ['CF_EMAIL'],
+                        key=os.environ['CF_KEY'])
 
     args = parser.parse_args()
 
     if args.verbose:
         log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
-        log.info("Verbose output.")
+        log.debug("Verbose output.")
     else:
-        log.basicConfig(format="%(levelname)s: %(message)s")
+        log.basicConfig(format="%(message)s", level=log.INFO)
 
-    cf_username = args.email
-    cf_key = args.key
-    hostname = args.hostname
-    ip = args.ip
-
-    update(cf_username, cf_key, hostname, ip)
+    update(args.email, args.key, args.hostname, args.ip, args.ttl)
 
 
 def syno():
-    update(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    """
+    In Synology wrapper, we echo the return value of the "update" for users to see errors:
+    """
+    print(update(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], 120))
 
 
 if __name__ == '__main__':

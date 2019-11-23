@@ -13,7 +13,7 @@ A tiny command line utility for implementing DDNS with Cloudflare.
 
 ```
 usage: cloudflareddns [-h] [--email EMAIL] [--key KEY] [--hostname HOSTNAME]
-                      [--ip IP] [--verbose] [--version]
+                      [--ip IP] [--ttl TTL] [--verbose] [--version]
 
 Update DDNS in Cloudflare.
 
@@ -23,6 +23,7 @@ optional arguments:
   --key KEY            Cloudflare API key
   --hostname HOSTNAME  Hostname to set IP for
   --ip IP              The IP address
+  --ttl TTL
   --verbose
   --version            show program's version number and exit
 ```
@@ -82,3 +83,28 @@ Installing with `pip` is easiest:
 
     pip install cloudflareddns
 
+### Usage in Python scripts
+
+```python
+from cloudflareddns import cloudflareddns
+hostname = 'foo.example.com'
+ip = '1.2.3.4'
+if cloudflareddns.updateRecord(hostname, ip):
+  print('Record is OK')
+  ...
+```
+
+Requires using environment variables (see tips below).
+
+### Tips
+
+In non-Synology system, it's best to place your Cloudflare credentials into `~/.bashrc` as opposed
+to passing them on the command-line. A `.bashrc` may have:
+
+```bash
+export CF_EMAIL="john@example.com"
+export CF_KEY="xxxxxx"
+```
+
+Don't forget to `source ~/.bashrc` if you have just put credentials in there.
+The `cloudflareddns` will pick those up, so no need to pass `--email` or `--key` every time.
