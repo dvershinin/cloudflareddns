@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""
+cloudflareddns
+==========
+License: BSD, see LICENSE for more details.
+"""
 
 import argparse
 import logging as log  # for verbose output
