@@ -15,7 +15,9 @@ def test_update():
     cfKey = os.environ['CF_KEY']
     # hostname should be Python version specific so that different versions tests
     # don't jump onto each other, so test271.example.com, test368.example.com, etc.
-    hostname = 'python{}.cloudflareddns.test.{}'.format(
+    # this test waits for actual DNS update so we suffix it with "m" in case
+    # in order for other tests (if they run earlier) not to update the same
+    hostname = 'python{}m.cloudflareddns.test.{}'.format(
         platform.python_version(),
         os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
 
