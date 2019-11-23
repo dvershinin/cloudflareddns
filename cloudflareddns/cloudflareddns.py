@@ -108,15 +108,15 @@ def update(cfUsername, cfKey, hostname, ip, ttl=None):
         log.error('/zones.dns_records.post %s - %d %s - api call failed' % (hostname, e, e))
         return '911'
 
-
-
     # reached far enough without genuine return/exception catching, must be an error
     # using 'badagent' just because it is unique to other statuses used above
     return 'badagent'
 
+
 def updateRecord(hostname, ip, ttl=None):
     res = update(os.environ['CF_EMAIL'], os.environ['CF_KEY'], hostname, ip, ttl)
     return res in ['good', 'nochg']
+
 
 def main():
     parser = argparse.ArgumentParser(description='Update DDNS in Cloudflare.')

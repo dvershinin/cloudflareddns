@@ -35,6 +35,7 @@ def test_update():
 
     assert newIp == ip
 
+
 def test_update_success_status():
 
     cfUsername = os.environ['CF_EMAIL']
@@ -55,6 +56,7 @@ def test_update_success_status():
     # fetch record
     assert res in ['good', 'nochg']
 
+
 def test_update_record_func_success():
 
     hostname = 'python{}.cloudflareddns.test.{}'.format(
@@ -67,6 +69,7 @@ def test_update_record_func_success():
     res = cloudflareddns.updateRecord(hostname, ip)
 
     assert res is True
+
 
 def test_update_record_func_failure():
 
