@@ -16,7 +16,7 @@ def test_update():
     # don't jump onto each other, so test271.example.com, test368.example.com, etc.
     # this test waits for actual DNS update so we suffix it with "m" in case
     # in order for other tests (if they run earlier) not to update the same
-    hostname = 'python{}m.cloudflareddns.test.{}'.format(
+    hostname = 'python{}m.{}'.format(
         platform.python_version(),
         os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
 
@@ -42,7 +42,7 @@ def test_update_success_status():
     cloudflareddns.cloudflare_creds_helper()
     # hostname should be Python version specific so that different versions tests
     # don't jump onto each other, so test271.example.com, test368.example.com, etc.
-    hostname = 'python{}.cloudflareddns.test.{}'.format(
+    hostname = 'python{}.{}'.format(
         platform.python_version(),
         os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
 
@@ -60,7 +60,7 @@ def test_update_success_status():
 def test_update_record_func_success():
 
     cloudflareddns.cloudflare_creds_helper()
-    hostname = 'python{}.cloudflareddns.test.{}'.format(
+    hostname = 'python{}.{}'.format(
         platform.python_version(),
         os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
 
