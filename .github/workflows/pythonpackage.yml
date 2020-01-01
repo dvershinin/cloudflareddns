@@ -34,3 +34,4 @@ jobs:
         pytest
       env:
         CLOUDFLAREDDNS_TEST_DOMAIN: ${{ secrets.CLOUDFLAREDDNS_TEST_DOMAIN }}
+        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
