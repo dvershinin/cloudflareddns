@@ -11,8 +11,7 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 def test_update():
 
-    cfUsername = os.environ['CF_EMAIL']
-    cfKey = os.environ['CF_KEY']
+    cloudflareddns.cloudflare_creds_helper()
     # hostname should be Python version specific so that different versions tests
     # don't jump onto each other, so test271.example.com, test368.example.com, etc.
     # this test waits for actual DNS update so we suffix it with "m" in case
@@ -27,7 +26,7 @@ def test_update():
     print("Updating to random IP: {}".format(ip))
 
     # cfUsername, cfKey, hostname, ip, ttl=None
-    cloudflareddns.update(cfUsername, cfKey, hostname, ip, 120)
+    cloudflareddns.update(hostname, ip, 120)
 
     time.sleep(180)
 
@@ -40,8 +39,7 @@ def test_update():
 
 def test_update_success_status():
 
-    cfUsername = os.environ['CF_EMAIL']
-    cfKey = os.environ['CF_KEY']
+    cloudflareddns.cloudflare_creds_helper()
     # hostname should be Python version specific so that different versions tests
     # don't jump onto each other, so test271.example.com, test368.example.com, etc.
     hostname = 'python{}.cloudflareddns.test.{}'.format(
@@ -53,7 +51,7 @@ def test_update_success_status():
 
     print("Updating to random IP: {}".format(ip))
 
-    res = cloudflareddns.update(cfUsername, cfKey, hostname, ip, 120)
+    res = cloudflareddns.update(hostname, ip, 120)
 
     # fetch record
     assert res in ['good', 'nochg']
@@ -61,6 +59,7 @@ def test_update_success_status():
 
 def test_update_record_func_success():
 
+    cloudflareddns.cloudflare_creds_helper()
     hostname = 'python{}.cloudflareddns.test.{}'.format(
         platform.python_version(),
         os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
@@ -75,6 +74,7 @@ def test_update_record_func_success():
 
 def test_update_record_func_failure():
 
+    cloudflareddns.cloudflare_creds_helper()
     # something we surely don't own and can't update:
     hostname = 'foo.example.com'.format(
         platform.python_version(),

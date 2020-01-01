@@ -19,14 +19,17 @@ Update DDNS in Cloudflare.
 
 optional arguments:
   -h, --help           show this help message and exit
-  --email EMAIL        Cloudflare account emai
-  --key KEY            Cloudflare API key
+  --email EMAIL        Cloudflare account email (omit if using API tokens)
+  --key KEY            Cloudflare API key or token
   --hostname HOSTNAME  Hostname to set IP for
   --ip IP              The IP address
-  --ttl TTL
+  --ttl TTL            TTL in seconds
   --verbose
   --version            show program's version number and exit
 ```
+
+When invoked without any options, `cloudflareddns` will try to point
+FQDN of the machine it runs on to its public IP address (auto-detected).
 
 ### Install and use with Synology DiskStations
 
@@ -63,14 +66,33 @@ EOF
 
 #### Step 3. Get Cloudflare parameters
 
-Go to your account setting page and get API Key.
+The most secure solution is using an API *token* only.
+(The old way of API email+*key* pair is still supported).
+
+To generate a *token*, go to your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens),
+then click on "Create Token". Using the following "Permissions":
+
+* Zone
+* DNS
+* Edit
+
+And select your specific domain in "Zone Resources":
+
+* Include
+* Specific zone
+* example.com (adjust to your domain, of course)
+
+
+Now you've got the token. 
 
 #### Step 4. Setup DDNS
 
 * Login to your DSM
 * Go to Control Panel > External Access > DDNS > Add
-* Select Cloudflare as service provider. Enter your domain as hostname, your Cloudflare account as Username/Email, and API key as Password/Key
+* Select Cloudflare as service provider
+* Enter your domain as hostname, `x` in the Username/Email, and API token as Password/Key
     
+The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field.    
 
 ### Installation for CentOS 7
 
@@ -96,14 +118,31 @@ if cloudflareddns.updateRecord(hostname, ip):
 
 Requires using environment variables (see tips below).
 
-### Tips
+## Cloudflare credentials
 
-In non-Synology system, it's best to place your Cloudflare credentials into `~/.bashrc` as opposed
-to passing them on the command-line. A `.bashrc` may have:
+
+### Storing credentials
+
+In non-Synology system, you can store Cloudflare credentials in either environment 
+variables or a configuration file.
+
+#### Configuration file
+
+Create `~/.cloudflare/cloudflare.cfg` and put:
+
+```ini
+[CloudFlare]
+email = user@example.com # Do not set if using an API Token
+token = xxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+#### Environment variables
+
+You can put your Cloudflare credentials into the `~/.bashrc` file:
 
 ```bash
-export CF_EMAIL="john@example.com"
-export CF_KEY="xxxxxx"
+export CF_API_EMAIL="user@example.com" # Do not set if using an API Token
+export CF_API_KEY="xxxxxx"
 ```
 
 Don't forget to `source ~/.bashrc` if you have just put credentials in there.

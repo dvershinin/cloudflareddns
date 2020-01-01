@@ -11,13 +11,55 @@ import socket  # to get default hostname
 import sys
 
 import CloudFlare
+import requests
 import tldextract
 from CloudFlare.exceptions import CloudFlareAPIError
 
 from .__about__ import __version__
 
 
-def update(cfUsername, cfKey, hostname, ip, ttl=None):
+def get_public_ip():
+    log.debug('Getting public IP from an external service')
+    return requests.get('https://ident.me').text
+
+
+def cloudflare_creds_helper(email=None, key=None):
+    """
+    Ensures a few things:
+    * priority of explicitly passed (e.g. on cmd-line) creds over env ones
+    * puts creds to in env for read by Cloudflare pkg code (security
+    * convert old naming of vars, to ones supported by Cloudflare pkg
+    * e.g. CF_EMAIL (our old) => CF_API_EMAIL (Cloudflare pkg)
+    :param email:
+    :param key:
+    """
+    # support old naming of env vars
+    if 'CF_EMAIL' in os.environ and 'CF_API_EMAIL' not in os.environ:
+        os.environ['CF_API_EMAIL'] = os.getenv('CF_EMAIL')
+    if 'CF_KEY' in os.environ and 'CF_API_KEY' not in os.environ:
+        os.environ['CF_API_KEY'] = os.getenv('CF_KEY')
+
+    if 'CF_API_TOKEN' in os.environ:
+        os.environ['CF_API_KEY'] = os.getenv('CF_API_TOKEN')
+        if 'CF_API_EMAIL' in os.environ:
+            del os.environ['CF_API_EMAIL']
+
+    if email:
+        # allow special value 'x' for email when using TOKENs
+        # in Synology GUI (which requires something user/email field)
+        if email == 'x':
+            email = None
+        os.environ['CF_API_EMAIL'] = email
+
+    if key:
+        # clear out env vars, so that we can be explicit with the TOKEN that we use in command line
+        # can't clear out config file though, but meh.
+        if not email and 'CF_API_EMAIL' in os.environ:
+            del os.environ['CF_API_EMAIL']
+        os.environ['CF_API_KEY'] = key
+
+
+def update(hostname, ip, ttl=None):
     """
     Create or update desired DNS record.
     Returns Synology-friendly status strings:
@@ -34,7 +76,7 @@ def update(cfUsername, cfKey, hostname, ip, ttl=None):
     else:
         ipAddressType = 'A'
 
-    cf = CloudFlare.CloudFlare(email=cfUsername, token=cfKey)
+    cf = CloudFlare.CloudFlare()
     # now get the zone id
     try:
         params = {'name': zoneDomain}
@@ -118,14 +160,14 @@ def update(cfUsername, cfKey, hostname, ip, ttl=None):
 
 
 def updateRecord(hostname, ip, ttl=None):
-    res = update(os.environ['CF_EMAIL'], os.environ['CF_KEY'], hostname, ip, ttl)
+    res = update(hostname, ip, ttl)
     return res in ['good', 'nochg']
 
 
 def main():
     parser = argparse.ArgumentParser(description='Update DDNS in Cloudflare.')
-    parser.add_argument('--email', help='Cloudflare account emai')
-    parser.add_argument('--key', help='Cloudflare API key')
+    parser.add_argument('--email', help='Cloudflare account email (omit if using API tokens)')
+    parser.add_argument('--key', help='Cloudflare API key or token')
     parser.add_argument('--hostname', metavar='HOSTNAME',
                         help='Hostname to set IP for')
     parser.add_argument('--ip', dest='ip',
@@ -136,8 +178,14 @@ def main():
     parser.add_argument('--version', action='version',
                         version='%(prog)s {version}'.format(version=__version__))
 
-    parser.set_defaults(hostname=socket.getfqdn(), ttl=None, email=os.environ['CF_EMAIL'],
-                        key=os.environ['CF_KEY'])
+    # we now use same env variables as Cloudflare Python package, but supporting older ones
+    # e.g. CF_EMAIL (our old) => CF_API_EMAIL (Cloudflare package naming)
+    if 'CF_EMAIL' in os.environ and 'CF_API_EMAIL' not in os.environ:
+        os.environ['CF_API_EMAIL'] = os.getenv('CF_EMAIL')
+    if 'CF_KEY' in os.environ and 'CF_API_KEY' not in os.environ:
+        os.environ['CF_API_KEY'] = os.getenv('CF_KEY')
+
+    parser.set_defaults(hostname=socket.getfqdn(), ttl=None, email=None, key=None)
 
     args = parser.parse_args()
 
@@ -147,14 +195,40 @@ def main():
     else:
         log.basicConfig(format="%(message)s", level=log.INFO)
 
-    update(args.email, args.key, args.hostname, args.ip, args.ttl)
+    # allow special value 'x' for email when using TOKENs
+    # in Synology GUI (which requires something user/email field)
+    if args.email == 'x':
+        args.email = None
+
+    # clear out env vars, so that we can be explicit with the TOKEN that we use in command line
+    # can't clear out config file though, but meh.
+    if args.key and not args.email:
+        if 'CF_API_EMAIL' in os.environ:
+            del os.environ['CF_API_EMAIL']
+        if 'CF_API_KEY' in os.environ:
+            del os.environ['CF_API_KEY']
+
+    if not args.ip:
+        args.ip = get_public_ip()
+
+    cloudflare_creds_helper(args.email, args.key)
+
+    update(args.hostname, args.ip, args.ttl)
 
 
 def syno():
     """
     In Synology wrapper, we echo the return value of the "update" for users to see errors:
     """
-    print(update(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], 120))
+    print(
+        update(
+            hostname=sys.argv[1],
+            ip=sys.argv[2],
+            ttl=120,
+            cfEmail=sys.argv[3],
+            cfKey=sys.argv[4]
+        )
+    )
 
 
 if __name__ == '__main__':
