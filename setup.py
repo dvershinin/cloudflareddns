@@ -10,7 +10,11 @@ cloudflareddns
 from setuptools import find_packages, setup
 import os
 
-install_requires = ["requests", "tldextract", "cloudflare"]
+install_requires = [
+    "requests",
+    "tldextract",
+    "cloudflare>=2.3.1"
+]
 tests_requires = ["pytest", "flake8", "faker"]
 
 with open("README.md", "r") as fh:

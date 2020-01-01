@@ -7,9 +7,23 @@ A tiny command line utility for implementing DDNS with Cloudflare.
 
 * Supports virtually any server that is capable of running Python
 * Synology DiskStations supported
-* Quick to install using `pip`
+* Quick to install using `yum/dnf` or `pip`
 
-## Synopsys
+## Synopsis
+
+Update DNS A record for `foo.example.com` to `1.2.3.4`
+
+```bash
+cloudflareddns --hostname foo.example.com --ip 1.2.3.4
+```
+
+Likewise, for an AAAA record:
+
+```bash
+cloudflareddns --hostname foo.example.com --ip 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+```
+
+Get all options by simply running `cloudflareddns -h`:
 
 ```
 usage: cloudflareddns [-h] [--email EMAIL] [--key KEY] [--hostname HOSTNAME]
@@ -28,8 +42,8 @@ optional arguments:
   --version            show program's version number and exit
 ```
 
-When invoked without any options, `cloudflareddns` will try to point
-FQDN of the machine it runs on to its public IP address (auto-detected).
+When invoked without any options, `cloudflareddns` will try to point the
+FQDN (aka `<hostname>.<domain-name>` of the machine it runs on to its public IP address (auto-detected).
 
 ### Install and use with Synology DiskStations
 
@@ -66,38 +80,26 @@ EOF
 
 #### Step 3. Get Cloudflare parameters
 
-The most secure solution is using an API *token* only.
-(The old way of API email+*key* pair is still supported).
+It is recommended to use a Cloudflare API *token*.
+Check the [wiki page](https://github.com/dvershinin/cloudflareddns/wiki/Token-Authentication) 
+for instructions on how to get an API token with the most secure permissions.
 
-To generate a *token*, go to your [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens),
-then click on "Create Token". Using the following "Permissions":
-
-* Zone
-* DNS
-* Edit
-
-And select your specific domain in "Zone Resources":
-
-* Include
-* Specific zone
-* example.com (adjust to your domain, of course)
-
-
-Now you've got the token. 
+Alternatively, you can get Cloudflare global API key in your account settings.
 
 #### Step 4. Setup DDNS
 
 * Login to your DSM
 * Go to Control Panel > External Access > DDNS > Add
 * Select Cloudflare as service provider
-* Enter your domain as hostname, `x` in the Username/Email, and API token as Password/Key
-    
-The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field.    
+* Enter your domain as hostname
+* If using token authentication: enter `x` in the Username/Email, and API token as Password/Key.
+The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field   
+* If using global API key: enter your Cloudflare account as Username/Email, and API key as Password/Key
 
-### Installation for CentOS 7
+### Installation for CentOS/RHEL 7+
 
-    yum install https://extras.getpagespeed.com/release-el7-latest.rpm
-    yum install python2-cloudflareddns
+    sudo yum install https://extras.getpagespeed.com/release-el$(rpm -E %{rhel})-latest.rpm
+    sudo yum install cloudflareddns
     
 ### Installation for other systems
 
@@ -118,15 +120,12 @@ if cloudflareddns.updateRecord(hostname, ip):
 
 Requires using environment variables (see tips below).
 
-## Cloudflare credentials
+### Specifying Cloudflare credentials
 
-
-### Storing credentials
-
-In non-Synology system, you can store Cloudflare credentials in either environment 
+In non-Synology systems, you can store Cloudflare credentials in either environment 
 variables or a configuration file.
 
-#### Configuration file
+#### Via configuration file
 
 Create `~/.cloudflare/cloudflare.cfg` and put:
 
@@ -136,7 +135,7 @@ email = user@example.com # Do not set if using an API Token
 token = xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-#### Environment variables
+#### Via environment variables
 
 You can put your Cloudflare credentials into the `~/.bashrc` file:
 
