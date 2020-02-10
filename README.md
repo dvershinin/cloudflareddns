@@ -45,7 +45,7 @@ optional arguments:
 When invoked without any options, `cloudflareddns` will try to point the
 FQDN (aka `<hostname>.<domain-name>` of the machine it runs on to its public IP address (auto-detected).
 
-### Install and use with Synology DiskStations
+## Install and use with Synology DiskStations
 
 You can configure a Synology DiskStation with CloudFlare DDNS.
 
@@ -53,14 +53,14 @@ You can configure a Synology DiskStation with CloudFlare DDNS.
 
 Alternative solution is to use `cloudflaredns` which ships with the necessary CLI interface for Synology compatibility: `cloudflareddns-syno`.
     
-#### Step 1. Access Synology via SSH
+### Step 1. Access Synology via SSH
 
 * Login to your DSM
 * Go to Control Panel > Terminal & SNMP > Enable SSH service
 * Use your client or commandline to access Synology. If you don't have any, I recommend you try out Putty for Windows.
 * Use your Synology admin account to connect.
 
-#### Step 2. Install `cloudflareddns`
+### Step 2. Install `cloudflareddns`
 
 If you're not a lazy man, checkout [instructions on installing using virtualenv](SAFE-INSTALL.md) for this step.
 For quick setup instead:
@@ -78,7 +78,7 @@ cat >> /etc/ddns_provider.conf << 'EOF'
 EOF
 ```
 
-#### Step 3. Get Cloudflare parameters
+### Step 3. Get Cloudflare parameters
 
 It is recommended to use a Cloudflare API *token*.
 Check the [wiki page](https://github.com/dvershinin/cloudflareddns/wiki/Token-Authentication) 
@@ -86,7 +86,7 @@ for instructions on how to get an API token with the most secure permissions.
 
 Alternatively, you can get Cloudflare global API key in your account settings.
 
-#### Step 4. Setup DDNS
+### Step 4. Setup DDNS
 
 * Login to your DSM
 * Go to Control Panel > External Access > DDNS > Add
@@ -96,18 +96,18 @@ Alternatively, you can get Cloudflare global API key in your account settings.
 The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field   
 * If using global API key: enter your Cloudflare account as Username/Email, and API key as Password/Key
 
-### Installation for CentOS/RHEL 7+
+## Installation for CentOS/RHEL 7, 8
 
-    sudo yum install https://extras.getpagespeed.com/release-el$(rpm -E %{rhel})-latest.rpm
+    sudo yum -y install https://extras.getpagespeed.com/release-latest.rpm
     sudo yum install cloudflareddns
     
-### Installation for other systems
+## Installation for other systems
 
 Installing with `pip` is easiest:
 
     pip install cloudflareddns
 
-### Usage in Python scripts
+## Usage in Python scripts
 
 ```python
 from cloudflareddns import cloudflareddns
@@ -120,12 +120,12 @@ if cloudflareddns.updateRecord(hostname, ip):
 
 Requires using environment variables (see tips below).
 
-### Specifying Cloudflare credentials
+## Specifying Cloudflare credentials
 
 In non-Synology systems, you can store Cloudflare credentials in either environment 
 variables or a configuration file.
 
-#### Via configuration file
+### Via configuration file
 
 Create `~/.cloudflare/cloudflare.cfg` and put:
 
@@ -135,7 +135,7 @@ email = user@example.com # Do not set if using an API Token
 token = xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-#### Via environment variables
+### Via environment variables
 
 You can put your Cloudflare credentials into the `~/.bashrc` file:
 
