@@ -76,9 +76,7 @@ def test_update_record_func_failure():
 
     cloudflareddns.cloudflare_creds_helper()
     # something we surely don't own and can't update:
-    hostname = 'foo.example.com'.format(
-        platform.python_version(),
-        os.environ['CLOUDFLAREDDNS_TEST_DOMAIN'])
+    hostname = 'foo.example.com'
 
     faker = Faker()
     ip = faker.ipv4()
