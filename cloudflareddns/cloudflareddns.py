@@ -33,6 +33,19 @@ def cloudflare_creds_helper(email=None, key=None):
     :param email:
     :param key:
     """
+    # allow special value 'x' for email when using TOKENs
+    # in Synology GUI (which requires something for user/email field)
+    if email == 'x':
+        email = None
+
+    # clear out env vars, so that we can be explicit with the TOKEN that we use in command line
+    # can't clear out config file though, but meh.
+    if key and not email:
+        if 'CF_API_EMAIL' in os.environ:
+            del os.environ['CF_API_EMAIL']
+        if 'CF_API_KEY' in os.environ:
+            del os.environ['CF_API_KEY']
+
     # support old naming of env vars
     if 'CF_EMAIL' in os.environ and 'CF_API_EMAIL' not in os.environ:
         os.environ['CF_API_EMAIL'] = os.getenv('CF_EMAIL')
@@ -70,6 +83,9 @@ def update(hostname, ip, ttl=None):
     # get zone name correctly (from hostname)
     zoneDomain = tldextract.extract(hostname).registered_domain
     log.debug("Zone domain of hostname is {}".format(zoneDomain))
+
+    if not zoneDomain:
+        return 'nohost'
 
     if ':' in ip:
         ipAddressType = 'AAAA'
@@ -195,19 +211,6 @@ def main():
     else:
         log.basicConfig(format="%(message)s", level=log.INFO)
 
-    # allow special value 'x' for email when using TOKENs
-    # in Synology GUI (which requires something user/email field)
-    if args.email == 'x':
-        args.email = None
-
-    # clear out env vars, so that we can be explicit with the TOKEN that we use in command line
-    # can't clear out config file though, but meh.
-    if args.key and not args.email:
-        if 'CF_API_EMAIL' in os.environ:
-            del os.environ['CF_API_EMAIL']
-        if 'CF_API_KEY' in os.environ:
-            del os.environ['CF_API_KEY']
-
     if not args.ip:
         args.ip = get_public_ip()
 
@@ -218,15 +221,39 @@ def main():
 
 def syno():
     """
-    In Synology wrapper, we echo the return value of the "update" for users to see errors:
+    In Synology wrapper, we echo the return value (e.g. "nochg") of the "update"
+    method for users to see status
     """
+
+    parser = argparse.ArgumentParser(description='Update DDNS in Cloudflare, for Synology.')
+    # Synology passes arguments in this order: username, password, hostname, ip
+    parser.add_argument('email', help='Cloudflare account E-Mail. '
+                                      'Specify "x" instead, if using an API token')
+    parser.add_argument('key', help='Cloudflare API key or token')
+    parser.add_argument('hostname', help='Hostname to set IP for')
+    parser.add_argument('ip', help='The IP address')
+
+    parser.add_argument('--verbose', dest='verbose', action='store_true')
+
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s {version}'.format(version=__version__))
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
+        log.debug("Verbose output.")
+    else:
+        log.basicConfig(format="%(message)s", level=log.INFO)
+
+    # set passed parameters to environment, for Cloudflare module to see
+    cloudflare_creds_helper(args.email, args.key)
+
     print(
         update(
-            hostname=sys.argv[1],
-            ip=sys.argv[2],
-            ttl=120,
-            cfEmail=sys.argv[3],
-            cfKey=sys.argv[4]
+            hostname=args.hostname,
+            ip=args.ip,
+            ttl=120
         )
     )
 
