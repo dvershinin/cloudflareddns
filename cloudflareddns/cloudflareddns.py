@@ -152,7 +152,8 @@ def update(hostname, ip, ttl=None):
 
         # Yes, we need to update this record - we know it's the same address type
         dnsRecordId = dnsRecord['id']
-
+        desiredRecordData['proxied'] = dnsRecord['proxied']
+        
         try:
             cf.zones.dns_records.put(zone_id, dnsRecordId, data=desiredRecordData)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
