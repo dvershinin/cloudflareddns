@@ -8,7 +8,6 @@ import argparse
 import logging as log  # for verbose output
 import os
 import socket  # to get default hostname
-import sys
 
 import CloudFlare
 import requests
@@ -141,7 +140,7 @@ def update(hostname, ip, ttl=None):
 
         if ipAddressType != oldIpType:
             # only update the correct address type (A or AAAA)
-            # we don't see this becuase of the search params above
+            # we don't see this because of the search params above
             log.debug('IGNORED: %s %s ; wrong address family' % (hostname, oldIp))
             continue
 
@@ -154,14 +153,14 @@ def update(hostname, ip, ttl=None):
         dnsRecordId = dnsRecord['id']
 
         try:
-            cf.zones.dns_records.put(zone_id, dnsRecordId, data=desiredRecordData)
+            cf.zones.dns_records.patch(zone_id, dnsRecordId, data=desiredRecordData)
         except CloudFlare.exceptions.CloudFlareAPIError as e:
             log.error('/zones.dns_records.put %s - %d %s - api call failed' % (hostname, e, e))
             return '911'
         log.info('UPDATED: %s %s -> %s' % (hostname, oldIp, ip))
         return 'good'
 
-    # no exsiting dns record to update - so create dns record
+    # no existing dns record to update - so create dns record
     try:
         cf.zones.dns_records.post(zone_id, data=desiredRecordData)
         log.info('CREATED: %s %s' % (hostname, ip))
