@@ -28,13 +28,16 @@ def test_update():
     # cfUsername, cfKey, hostname, ip, ttl=None
     cloudflareddns.update(hostname, ip, 120)
 
-    time.sleep(180)
-
+    # actual DNS test is slow and unreliable
+    # time.sleep(180)
     # fetch record
-    newIp = socket.gethostbyname(hostname)
-    print("Resolved IP after update is: {}".format(newIp))
+    # newIp = socket.gethostbyname(hostname)
+    # print("Resolved IP after update is: {}".format(newIp))
+    # assert newIp == ip
 
-    assert newIp == ip
+    # test getting "nochg" upon updating the same IP
+    status = cloudflareddns.update(hostname, ip)
+    assert status == 'nochg'
 
 
 def test_update_success_status():
