@@ -55,6 +55,7 @@ def cloudflare_creds_helper(email=None, key=None):
         os.environ['CF_API_KEY'] = os.getenv('CF_API_TOKEN')
         if 'CF_API_EMAIL' in os.environ:
             del os.environ['CF_API_EMAIL']
+        del os.environ['CF_API_TOKEN']
 
     if email:
         # allow special value 'x' for email when using TOKENs
