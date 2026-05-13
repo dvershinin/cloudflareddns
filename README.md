@@ -1,6 +1,6 @@
 # cloudflareddns
 
-[![Build Status](https://travis-ci.org/dvershinin/cloudflareddns.svg?branch=master)](https://travis-ci.org/dvershinin/cloudflareddns)
+[![Python package](https://github.com/dvershinin/cloudflareddns/actions/workflows/pythonpackage.yml/badge.svg)](https://github.com/dvershinin/cloudflareddns/actions/workflows/pythonpackage.yml)
 [![PyPI version](https://badge.fury.io/py/cloudflareddns.svg)](https://badge.fury.io/py/cloudflareddns)
 [![Buy Me a Coffee](https://img.shields.io/badge/dynamic/json?color=blue&label=Buy%20me%20a%20Coffee&prefix=%23&query=next_time_total&url=https%3A%2F%2Fwww.getpagespeed.com%2Fbuymeacoffee.json&logo=buymeacoffee)](https://www.buymeacoffee.com/dvershinin)
 
@@ -138,9 +138,18 @@ variables or a configuration file.
 
 Create `~/.cloudflare/cloudflare.cfg` and put:
 
+If you use an **API token** (recommended), set only `token` — do **not** add an `email` line:
+
 ```ini
 [CloudFlare]
-email = user@example.com # Do not set if using an API Token
+token = xxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+If you use the **global API key**, set both `email` and `token`:
+
+```ini
+[CloudFlare]
+email = user@example.com
 token = xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
