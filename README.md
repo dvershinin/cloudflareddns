@@ -1,4 +1,4 @@
-# cloudflareddns 
+# cloudflareddns
 
 [![Build Status](https://travis-ci.org/dvershinin/cloudflareddns.svg?branch=master)](https://travis-ci.org/dvershinin/cloudflareddns)
 [![PyPI version](https://badge.fury.io/py/cloudflareddns.svg)](https://badge.fury.io/py/cloudflareddns)
@@ -53,7 +53,7 @@ You can configure a Synology DiskStation with CloudFlare DDNS.
 **It's worth noting that if your Synology DSM is recent enough, you can simply use Synology's own DDNS service, then create a `CNAME` record at your domain that points to it. The downside to this solution, however, is extra DNS lookup required to resolve domain to IP.**
 
 Alternative solution is to use `cloudflaredns` which ships with the necessary CLI interface for Synology compatibility: `cloudflareddns-syno`.
-    
+
 ### Step 1. Access Synology via SSH
 
 * Login to your DSM
@@ -82,7 +82,7 @@ EOF
 ### Step 3. Get Cloudflare parameters
 
 It is recommended to use a Cloudflare API *token*.
-Check the [wiki page](https://github.com/dvershinin/cloudflareddns/wiki/Token-Authentication) 
+Check the [wiki page](https://github.com/dvershinin/cloudflareddns/wiki/Token-Authentication)
 for instructions on how to get an API token with the most secure permissions.
 
 Alternatively, you can get Cloudflare global API key in your account settings.
@@ -94,19 +94,27 @@ Alternatively, you can get Cloudflare global API key in your account settings.
 * Select Cloudflare as service provider
 * Enter your domain as hostname
 * If using token authentication: enter `x` in the Username/Email, and API token as Password/Key.
-The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field   
+The requirement to put `x` is due to Synology GUI's constraints not allowing for an empty field
 * If using global API key: enter your Cloudflare account as Username/Email, and API key as Password/Key
 
 ## Installation for CentOS/RHEL 7, 8
 
     sudo yum -y install https://extras.getpagespeed.com/release-latest.rpm
     sudo yum install cloudflareddns
-    
+
 ## Installation for other systems
 
 Installing with `pip` is easiest:
 
     pip install cloudflareddns
+
+### Cloudflare library compatibility
+
+`cloudflareddns` currently targets the `cloudflare` PyPI package v2.x line.
+The upstream v3.0 release was a complete API rewrite and is **not** compatible
+with this tool. The `pip install` above pins `cloudflare<3` automatically, so
+you don't need to do anything manually. If you previously installed a v3+
+release in the same environment, run `pip install 'cloudflare<3'` to downgrade.
 
 ## Usage in Python scripts
 
@@ -123,7 +131,7 @@ Requires using environment variables (see tips below).
 
 ## Specifying Cloudflare credentials
 
-In non-Synology systems, you can store Cloudflare credentials in either environment 
+In non-Synology systems, you can store Cloudflare credentials in either environment
 variables or a configuration file.
 
 ### Via configuration file

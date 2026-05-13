@@ -10,11 +10,7 @@ cloudflareddns
 from setuptools import find_packages, setup
 import os
 
-install_requires = [
-    "requests",
-    "tldextract",
-    "cloudflare>=2.3.1"
-]
+install_requires = ["requests", "tldextract", "cloudflare>=2.3.1,<3"]
 tests_requires = ["pytest", "flake8", "faker"]
 
 with open("README.md", "r") as fh:
@@ -44,7 +40,12 @@ setup(
     },
     tests_require=tests_requires,
     include_package_data=True,
-    entry_points={"console_scripts": ["cloudflareddns = cloudflareddns:main", "cloudflareddns-syno = cloudflareddns:syno"]},
+    entry_points={
+        "console_scripts": [
+            "cloudflareddns = cloudflareddns:main",
+            "cloudflareddns-syno = cloudflareddns:syno",
+        ]
+    },
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",
